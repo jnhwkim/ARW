@@ -12,8 +12,8 @@ function [edges, p] = arw_train(edges, x, y, r, lr, epsilon)
 	ar_learning = true;
 
 	p_init = zeros(1, size(edges, 1));
-	% x = x / sum(x);
-	% p_init(1, 1:size(x,2)) = -x;
+	x = x / sum(x);
+	p_init(1, 1:size(x,2)) = x;
 	p_init(1, end-size(y,2)+1:end) = y;
 	p_prev = p_init;
 	max_diff = 1;
@@ -49,7 +49,8 @@ function [edges, p] = arw_train(edges, x, y, r, lr, epsilon)
 	if ar_learning
 		for i = 1 : size(edges, 1)
 			target = find(edges(i,:)~=0);
-			edges(i,target) = edges(i,target) + lr * (edges(i,target) .* p(1,target));
+			lf = sigmoid(p(1,target) / sum(p(1,target))  - edges(i,target)) - 0.5;
+			edges(i,target) = edges(i,target) + lr * p(1,i) * lf;
 		end
 		% Normalize to make the model follow the Markov chain constraint.
 		% Sum of each row is one.
