@@ -4,13 +4,12 @@
 % Created: August 16 2014
 %
 % Return the model of Attractive Random Walk.
-% @param n number of nodes in the layers (same number of nodes per a layer)
-% @param l number of layers
+% @param n number of nodes 
 
-function [edges] = arw_model(n, l, sparseness)
+function [edges] = arw_model(n, sparseness)
 
 	% Fully-connected and randomly weighted edges.
-	edges = rand(n * l, n * l);
+	edges = rand(n);
 
 	% Sinks check and pruning according to a given sparseness.
 	for i = 1 : size(edges, 1)
@@ -21,8 +20,11 @@ function [edges] = arw_model(n, l, sparseness)
 		edges(i, prune) = 0;
 	end
 
+	edges(1:10, 1:10) = 0;
+	edges(end-9:end, end-9:end) = 0;
+
 	% Normalize to make the model follow the Markov chain constraint.
 	% Sum of each row is one.
-	edges = edges ./ (sum(edges, 2) * ones(size(edges, 1), 1)');
+	edges = arw_norm(edges);
 
 end
