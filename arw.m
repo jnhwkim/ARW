@@ -10,16 +10,16 @@ addpath('mnist');
 % feature_size = 784;
 % layers = 3;
 feature_size = 10;
-layers = 10;
+layers = 5;
 
 %% Loading the data
 % images = loadMNISTImages('train-images-idx3-ubyte')';
 labels = loadMNISTLabels('train-labels-idx1-ubyte');
 
-[edges] = arw_model(feature_size * layers + 10, 0.3);
+[edges] = arw_model(feature_size * layers + 10, 0.6);
 edges_init = edges;
 
-r = 0.1;
+r = 0.05;
 lr = 1;
 epsilon = 0.1 .^ 9;
 sample_size = 1000;
