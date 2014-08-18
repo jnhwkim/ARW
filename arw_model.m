@@ -21,7 +21,9 @@ function [edges] = arw_model(n, sparseness)
 	end
 
 	edges(1:10, 1:10) = 0;
+	edges(1:10, end-9:end) = 0;
 	edges(end-9:end, end-9:end) = 0;
+	edges(end-9:end, 1:10) = 0;
 
 	% Normalize to make the model follow the Markov chain constraint.
 	% Sum of each row is one.
