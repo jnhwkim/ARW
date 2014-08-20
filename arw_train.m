@@ -22,7 +22,8 @@ function [edges, p] = arw_train(edges, x, y, r, lr, epsilon)
 
 	while max_diff > epsilon
 		% Propagation
-		p = p_prev * edges;
+		p(1,:) = p_prev(1,:) * edges;
+        p(2,:) = p_prev(2,:) * edges';
 		p_next = (1-r) * p_init + r * p;
 		
 		% Hebbian learning at each propagation

@@ -7,29 +7,29 @@
 
 addpath('mnist');
 
-% feature_size = 784;
-% layers = 3;
-feature_size = 10;
-layers = 5;
+feature_size = 784;
+layers = 3;
+% feature_size = 10;
+% layers = 5;
 
 %% Loading the data
-% images = loadMNISTImages('train-images-idx3-ubyte')';
+images = loadMNISTImages('train-images-idx3-ubyte')';
 labels = loadMNISTLabels('train-labels-idx1-ubyte');
 
-[edges] = arw_model(feature_size * layers + 10, 0.6);
+[edges] = arw_model(feature_size * layers + 10, 1);
 edges_init = edges;
 
-r = 0.05;
+r = 0.5;
 lr = 1;
-epsilon = 0.1 .^ 9;
+epsilon = 0.1 .^ 5;
 sample_size = 1000;
 trace_mat = zeros(sample_size, size(edges,2));
 
 for i = 1:sample_size
-	% x = images(i,:);
 	y_idx = mod(9+labels(i),10)+1;
 	y = zeros(1,10); y(y_idx) = 1;
-	x = y;
+    x = images(i,:);
+	% x = y;
 	[edges, p] = arw_train(edges, x, y, r, lr, epsilon);
 	trace_mat(i,:) = p;
 end
@@ -56,10 +56,10 @@ imshow(trace_ordered(:,end-9:end)*256, jet(32));
 set(f, 'Position', [0 200 1200 600]);
 
 correct = 0;
-for i = 1:sample_size
-	% x = images(i,:);
+for i = sample_size+1:sample_size+200
 	y_idx = mod(9+labels(i),10)+1;
-	x = zeros(1,10); x(y_idx) = 1;
+    x = images(i,:);
+	% x = zeros(1,10); x(y_idx) = 1;
 	y = arw_test(edges, x, r, epsilon);
 	[c,idx] = max(y(end-9:end));
 	predict_idx = mod(9+idx,10)+1;
