@@ -24,16 +24,7 @@ Theta2 = reshape(nn_params((1 + (hidden_layer_size * (input_layer_size + 1))):en
 
 % Setup some useful variables
 m = size(X, 1);
-         
-% You need to return the following variables correctly 
-J = 0;
-Theta1_grad = zeros(size(Theta1));
-Theta2_grad = zeros(size(Theta2));
 
-% ====================== YOUR CODE HERE ======================
-% Instructions: You should complete the code by working through the
-%               following parts.
-%
 % Part 1: Feedforward the neural network and return the cost in the
 %         variable J. After implementing Part 1, you can verify that your
 %         cost function computation is correct by verifying the cost
@@ -66,17 +57,16 @@ X = [ ones(m,1), X ];
 
 a2 = sigmoid( X * Theta1' );
 a2 = [ ones( size(a2,1), 1 ), a2 ];
-
 a3 = sigmoid( a2 * Theta2' );
 
 h = a3;
 yy = zeros( size(y,1), num_labels );
 for i = 1:size(y,1)
 	yy(i,y(i)) = 1;
-endfor
+end
 
 J = sum(sum(-yy.*log(h)-(1.-yy).*log(1.-h))) / m;
-J += ( sum(sum(Theta1(:,2:end).^2)) + sum(sum(Theta2(:,2:end).^2)) ) * lambda / (2*m);
+J = J + ( sum(sum(Theta1(:,2:end).^2)) + sum(sum(Theta2(:,2:end).^2)) ) * lambda / (2*m);
 
 D1 = 0;
 D2 = 0;
@@ -93,12 +83,12 @@ for t = 1:m
 	d2 = Theta2' * d3 .* [0;sigmoidGradient(z2)];
 	d2 = d2(2:end);
 
-	D1 += d2 * a1';
-	D2 += d3 * a2';
-endfor
+	D1 = D1 + d2 * a1';
+	D2 = D2 + d3 * a2';
+end
 
-D1 /= m;
-D2 /= m;
+D1 = D1 / m;
+D2 = D2 / m;
 
 Theta1(:,1) = zeros( size(Theta1,1), 1 );
 Theta2(:,1) = zeros( size(Theta2,1), 1 );
@@ -106,15 +96,7 @@ Theta2(:,1) = zeros( size(Theta2,1), 1 );
 Theta1_grad = D1 + lambda * Theta1 / m;
 Theta2_grad = D2 + lambda * Theta2 / m;
 
-
-
-
-% -------------------------------------------------------------
-
-% =========================================================================
-
 % Unroll gradients
 grad = [Theta1_grad(:) ; Theta2_grad(:)];
-
 
 end
