@@ -16,11 +16,24 @@ function [J grad] = nnCostFunction(nn_params, ...
 
 % Reshape nn_params back into the parameters Theta1 and Theta2, the weight matrices
 % for our 2 layer neural network
-Theta1 = reshape(nn_params(1:hidden_layer_size * (input_layer_size + 1)), ...
-                 hidden_layer_size, (input_layer_size + 1));
-
-Theta2 = reshape(nn_params((1 + (hidden_layer_size * (input_layer_size + 1))):end), ...
-                 num_labels, (hidden_layer_size + 1));
+num_hidden_layers = size(hidden_layer_size, 2);
+Theta = cell(num_hidden_layers, 1);
+pos = 0;
+for i = 1 : num_hidden_layers
+  if 1 == i
+    input_size = input_layer_size;
+  else
+    input_size = hidden_layer_size(1, i);
+  end
+  if num_hidden_layers == i
+    output_size = num_labels;
+  else
+    output_size = hidden_layer_size(1, i + 1);
+  end
+  Theta{i} = reshape(nn_params(pos + 1 : pos + output_size * (input_size + 1)), ...
+                     output_size, (input_size + 1));
+  pos = pos + output_size * (input_size + 1);
+end
 
 % Setup some useful variables
 m = size(X, 1);
@@ -54,49 +67,73 @@ m = size(X, 1);
 %
 
 X = [ ones(m,1), X ];
+Z = 0;
 
-a2 = sigmoid( X * Theta1' );
-a2 = [ ones( size(a2,1), 1 ), a2 ];
-a3 = sigmoid( a2 * Theta2' );
+for i = 1 : num_hidden_layers
+	if 1 == i
+		a = sigmoid(X * Theta{i}');
+	else
+		a = [ones(size(a, 1), 1), a];
+		a = sigmoid(a * Theta{i}');
+	end
+	Z = Z + sum(sum(Theta{i}(:,2:end).^2));
+end
 
-h = a3;
+h = a;
 yy = zeros( size(y,1), num_labels );
-for i = 1:size(y,1)
+for i = 1 : size(y,1)
 	yy(i,y(i)) = 1;
 end
 
 J = sum(sum(-yy.*log(h)-(1.-yy).*log(1.-h))) / m;
-J = J + ( sum(sum(Theta1(:,2:end).^2)) + sum(sum(Theta2(:,2:end).^2)) ) * lambda / (2*m);
+J = J + Z * lambda / (2*m);
 
-D1 = 0;
-D2 = 0;
+D = cell(num_hidden_layers, 1);
+Theta_grad = cell(num_hidden_layers, 1);
 
-for t = 1:m
-	a1 = X(t,:)';
-	z2 = Theta1 * a1;
-	a2 = [1;sigmoid( z2 )];
-	z3 = Theta2 * a2;
-	a3 = sigmoid( z3 );
-	yy = zeros( num_labels, 1 );
-	yy(y(t)) = 1;
-	d3 = a3 - yy;
-	d2 = Theta2' * d3 .* [0;sigmoidGradient(z2)];
-	d2 = d2(2:end);
+for t = 1 : m
+	a = cell(num_hidden_layers + 1, 1);
+	z = cell(num_hidden_layers + 1, 1);
+	d = cell(num_hidden_layers + 1, 1);
 
-	D1 = D1 + d2 * a1';
-	D2 = D2 + d3 * a2';
+	for i = 1 : num_hidden_layers
+		if 1 == i
+			a{i} = X(t, :)';
+		else
+			a{i} = [1; sigmoid(z{i})];
+		end
+		z{i+1} = Theta{i} * a{i};
+		if size(Theta, 1) == i
+			a{i+1} = sigmoid(z{i+1});
+		end
+	end
+
+	for i = num_hidden_layers + 1 : -1 : 2
+		if num_hidden_layers + 1 == i
+			yy = zeros(num_labels, 1);
+			yy(y(t)) = 1;
+			d{i} = a{i} - yy;
+		else
+			d{i} = Theta{i}' * d{i+1} .* [0; sigmoidGradient(z{i})];
+			d{i} = d{i}(2:end);
+		end
+	end
+
+	for i = 1 : num_hidden_layers
+		if 1 == t
+			D{i} = zeros(size(d{i+1} * a{i}'));
+		end
+		D{i} = D{i} + d{i+1} * a{i}';
+	end
 end
 
-D1 = D1 / m;
-D2 = D2 / m;
-
-Theta1(:,1) = zeros( size(Theta1,1), 1 );
-Theta2(:,1) = zeros( size(Theta2,1), 1 );
-
-Theta1_grad = D1 + lambda * Theta1 / m;
-Theta2_grad = D2 + lambda * Theta2 / m;
-
-% Unroll gradients
-grad = [Theta1_grad(:) ; Theta2_grad(:)];
+grad = [];
+for i = 1 : num_hidden_layers
+	D{i} = D{i} / m;
+	Theta{i}(:,1) = zeros(size(Theta{i}, 1), 1);
+	Theta_grad{i} = D{i} + lambda * Theta{i} / m;
+	% Unroll gradients
+	grad = [grad; Theta_grad{i}(:)];
+end
 
 end

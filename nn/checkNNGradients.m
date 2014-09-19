@@ -13,19 +13,34 @@ if ~exist('lambda', 'var') || isempty(lambda)
 end
 
 input_layer_size = 3;
-hidden_layer_size = 5;
+hidden_layer_size = [5 5];
 num_labels = 3;
 m = 5;
 
 % We generate some 'random' test data
-Theta1 = debugInitializeWeights(hidden_layer_size, input_layer_size);
-Theta2 = debugInitializeWeights(num_labels, hidden_layer_size);
+num_hidden_layers = size(hidden_layer_size, 2);
+Theta = cell(num_hidden_layers, 1);
+nn_params = [];
+
+for i = 1 : num_hidden_layers
+  if 1 == i
+    input_size = input_layer_size;
+  else
+    input_size = hidden_layer_size(1, i);
+  end
+  if num_hidden_layers == i
+    output_size = num_labels;
+  else
+    output_size = hidden_layer_size(1, i + 1);
+  end
+  Theta{i} = randInitializeWeights(input_size, output_size);
+
+  % Unroll parameters
+  nn_params = [nn_params; Theta{i}(:)];
+end
 % Reusing debugInitializeWeights to generate X
 X  = debugInitializeWeights(m, input_layer_size - 1);
 y  = 1 + mod(1:m, num_labels)';
-
-% Unroll parameters
-nn_params = [Theta1(:) ; Theta2(:)];
 
 % Short hand for cost function
 costFunc = @(p) nnCostFunction(p, input_layer_size, hidden_layer_size, ...
