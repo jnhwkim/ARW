@@ -88,6 +88,21 @@ end
 J = sum(sum(-yy.*log(h)-(1.-yy).*log(1.-h))) / m;
 J = J + Z * lambda / (2*m);
 
+%% Dropout
+dropRate = 0.1;
+dropout = true;
+if dropout
+    for i = 1 : size(Theta, 1)
+        theta_size = size(Theta{i}, 1) * (size(Theta{i}, 2) - 1);
+        indices = randsample(theta_size, floor(theta_size * dropRate));
+        [row, col] = ind2sub(size(Theta{i}), indices);
+        for j = 1 : size(row, 1)
+            Theta{i}(row(j, 1), col(j, 1) + 1) = 0;
+        end
+    end
+end
+
+%% Get Gradients
 D = cell(num_hidden_layers, 1);
 Theta_grad = cell(num_hidden_layers, 1);
 
@@ -120,20 +135,24 @@ for t = 1 : m
 	end
 
 	for i = 1 : num_hidden_layers
+        da = d{i+1} * a{i}';
 		if 1 == t
-			D{i} = zeros(size(d{i+1} * a{i}'));
+			D{i} = zeros(size(da));
 		end
-		D{i} = D{i} + d{i+1} * a{i}';
+		D{i} = D{i} + da;
 	end
 end
 
-grad = [];
+grad = zeros(size(nn_params, 1), 1);
+pos = 1;
 for i = 1 : num_hidden_layers
 	D{i} = D{i} / m;
 	Theta{i}(:,1) = zeros(size(Theta{i}, 1), 1);
 	Theta_grad{i} = D{i} + lambda * Theta{i} / m;
 	% Unroll gradients
-	grad = [grad; Theta_grad{i}(:)];
+    ta = Theta_grad{i}(:);
+	grad(pos:pos - 1 + size(ta, 1), 1) = ta;
+    pos = pos + size(ta, 1);
 end
 
 end
