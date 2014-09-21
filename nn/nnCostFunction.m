@@ -16,24 +16,7 @@ function [J grad] = nnCostFunction(nn_params, ...
 
 % Reshape nn_params back into the parameters Theta1 and Theta2, the weight matrices
 % for our 2 layer neural network
-num_hidden_layers = size(hidden_layer_size, 2);
-Theta = cell(num_hidden_layers, 1);
-pos = 0;
-for i = 1 : num_hidden_layers
-  if 1 == i
-    input_size = input_layer_size;
-  else
-    input_size = hidden_layer_size(1, i);
-  end
-  if num_hidden_layers == i
-    output_size = num_labels;
-  else
-    output_size = hidden_layer_size(1, i + 1);
-  end
-  Theta{i} = reshape(nn_params(pos + 1 : pos + output_size * (input_size + 1)), ...
-                     output_size, (input_size + 1));
-  pos = pos + output_size * (input_size + 1);
-end
+Theta = vec2theta(nn_params, input_layer_size, hidden_layer_size, num_labels);
 
 % Setup some useful variables
 m = size(X, 1);
@@ -68,6 +51,7 @@ m = size(X, 1);
 
 X = [ ones(m,1), X ];
 Z = 0;
+num_hidden_layers = size(hidden_layer_size, 2);
 
 for i = 1 : num_hidden_layers
 	if 1 == i
@@ -85,12 +69,13 @@ for i = 1 : size(y,1)
 	yy(i,y(i)) = 1;
 end
 
-J = sum(sum(-yy.*log(h)-(1.-yy).*log(1.-h))) / m;
+eps = 0.01;
+J = sum(sum(-yy.*log(max(h,eps))-(1.-yy).*log(max(1.-h,eps)))) / m;
 J = J + Z * lambda / (2*m);
 
 %% Dropout
-dropRate = 0.1;
-dropout = true;
+dropRate = 0.5;
+dropout = false;
 if dropout
     for i = 1 : size(Theta, 1)
         theta_size = size(Theta{i}, 1) * (size(Theta{i}, 2) - 1);

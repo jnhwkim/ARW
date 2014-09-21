@@ -46,6 +46,8 @@ function [X, fX, i] = fmincg(f, X, options, P1, P2, P3, P4, P5)
 % 1) Function name and argument specifications
 % 2) Output display
 %
+% [jhkim] Changes Made:
+% 1) Don't give up, for dropout.
 
 % Read options
 if exist('options', 'var') && ~isempty(options) && isfield(options, 'MaxIter')
@@ -53,7 +55,13 @@ if exist('options', 'var') && ~isempty(options) && isfield(options, 'MaxIter')
 else
     length = 100;
 end
-
+if isfield(options, 'Display')
+    if strcmp(options.Display, 'off')
+        verbose = false;
+    else
+        verbose = true;
+    end
+end
 
 RHO = 0.01;                            % a bunch of constants for line searches
 SIG = 0.5;       % RHO and SIG are the constants in the Wolfe-Powell conditions
@@ -146,7 +154,9 @@ while i < abs(length)                                      % while not finished
 
   if success                                         % if line search succeeded
     f1 = f2; fX = [fX' f1]';
-    fprintf('%s %4i | Cost: %4.6e\r', S, i, f1);
+    if verbose
+        fprintf('%s %4i | Cost: %4.6e\r', S, i, f1);
+    end
     s = (df2'*df2-df1'*df2)/(df1'*df1)*s - df2;      % Polack-Ribiere direction
     tmp = df1; df1 = df2; df2 = tmp;                         % swap derivatives
     d2 = df1'*s;
@@ -160,7 +170,9 @@ while i < abs(length)                                      % while not finished
   else
     X = X0; f1 = f0; df1 = df0;  % restore point from before failed line search
     if ls_failed | i > abs(length)          % line search failed twice in a row
-      break;                             % or we ran out of time, so we give up
+      disp('give up..');
+    else
+      %break;                             % or we ran out of time, so we give up
     end
     tmp = df1; df1 = df2; df2 = tmp;                         % swap derivatives
     s = -df1;                                                    % try steepest
@@ -172,4 +184,4 @@ while i < abs(length)                                      % while not finished
     fflush(stdout);
   end
 end
-fprintf('\n');
+% fprintf('\n');

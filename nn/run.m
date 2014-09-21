@@ -12,15 +12,15 @@ verbose = false;
 
 %% Setup the parameters you will use for this exercise
 input_layer_size  = 400;  % 20x20 Input Images of Digits
-hidden_layer_size = [25];   % 25 hidden units
+hidden_layer_size = [100 50 30];   % 25 hidden units
 num_labels = 10;          % 10 labels, from 1 to 10   
                           % (note that we have mapped "0" to label 10)
                           
-%% =========== Learning History (iter=50) ==============
-%  For ex4data1.mat     Plain    Dropout(.1)
-%  25                   93.18    89.56
-%  50x30                95.92   
-%  100x50x30            93.12
+%% =========== Learning History (iter=50,100) ==============
+%  For ex4data1.mat     Plain    ReLu   Dropout(.5)
+%  25                   93.18           89.56
+%  50x30                95.92    
+%  100x50x30            93.12   
 %  300x200x100          90.02
 
 %% =========== Part 1: Loading and Visualizing Data =============
@@ -104,7 +104,8 @@ fprintf('\nTraining Neural Network... \n')
 
 %  After you have completed the assignment, change the MaxIter to a larger
 %  value to see how more training helps.
-options = optimset('MaxIter', 50);
+batch_size = 5;
+options = optimset('MaxIter', batch_size, 'Display', 'off');
 
 %  You should also try different values of lambda
 lambda = 1;
@@ -115,28 +116,21 @@ costFunction = @(p) nnCostFunction(p, ...
                                    hidden_layer_size, ...
                                    num_labels, X, y, lambda);
 
-% Now, costFunction is a function that takes in only one argument (the
-% neural network parameters)
-[nn_params, cost] = fmincg(costFunction, initial_nn_params, options);
+nn_params = initial_nn_params;
+iter = 20;
+accuracy = zeros(iter, 1);
 
-% Obtain Theta back from nn_params
-num_hidden_layers = size(hidden_layer_size, 2);
-Theta = cell(num_hidden_layers, 1);
-pos = 0;
-for i = 1 : num_hidden_layers
-  if 1 == i
-    input_size = input_layer_size;
-  else
-    input_size = hidden_layer_size(1, i);
-  end
-  if num_hidden_layers == i
-    output_size = num_labels;
-  else
-    output_size = hidden_layer_size(1, i + 1);
-  end
-  Theta{i} = reshape(nn_params(pos + 1 : pos + output_size * (input_size + 1)), ...
-                     output_size, (input_size + 1));
-  pos = pos + output_size * (input_size + 1);
+for i = 1 : iter                           
+    % Now, costFunction is a function that takes in only one argument (the
+    % neural network parameters)
+    [nn_params, cost] = fmincg(costFunction, nn_params, options);
+
+    % Obtain Theta back from nn_params
+    Theta = vec2theta(nn_params, input_layer_size, hidden_layer_size, num_labels);
+
+    pred = predict(Theta, X);
+    accuracy(i) = mean(double(pred == y)) * 100;
+    fprintf('Iteration %4i | Accuracy: %4.6f\r', i*batch_size, accuracy(i));
 end
 
 fprintf('Program paused. Press enter to continue.\n');
@@ -162,7 +156,6 @@ pause;
 %  you compute the training set accuracy.
 
 pred = predict(Theta, X);
-
 fprintf('\nTraining Set Accuracy: %f\n', mean(double(pred == y)) * 100);
 
 

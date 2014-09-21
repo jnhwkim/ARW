@@ -38,6 +38,7 @@ for i = 1 : num_hidden_layers
   % Unroll parameters
   nn_params = [nn_params; Theta{i}(:)];
 end
+
 % Reusing debugInitializeWeights to generate X
 X  = debugInitializeWeights(m, input_layer_size - 1);
 y  = 1 + mod(1:m, num_labels)';
