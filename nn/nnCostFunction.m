@@ -75,7 +75,7 @@ J = J + Z * lambda / (2*m);
 
 %% Dropout
 dropRate = 0.5;
-dropout = false;
+dropout = true;
 if dropout
     for i = 1 : size(Theta, 1)
         theta_size = size(Theta{i}, 1) * (size(Theta{i}, 2) - 1);

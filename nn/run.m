@@ -9,19 +9,24 @@ clear ; close all; clc
 
 %% Verbose
 verbose = false;
+initial = true;
+iter = 300;
 
 %% Setup the parameters you will use for this exercise
-input_layer_size  = 400;  % 20x20 Input Images of Digits
-hidden_layer_size = [100 50 30];   % 25 hidden units
+input_layer_size  = 784;  % 20x20 Input Images of Digits
+hidden_layer_size = [300 300];   % 25 hidden units
 num_labels = 10;          % 10 labels, from 1 to 10   
                           % (note that we have mapped "0" to label 10)
                           
-%% =========== Learning History (iter=50,100) ==============
-%  For ex4data1.mat     Plain    ReLu   Dropout(.5)
-%  25                   93.18           89.56
-%  50x30                95.92    
-%  100x50x30            93.12   
-%  300x200x100          90.02
+%% =========== Learning History (iter=100) ==============
+%  Test Error           Base     ReLu   LReL    Dropout                              
+%  300x300              89.61    55.53  88.28   62.09
+
+%% =========== Learning History (iter=300) ==============
+%  Test Error           Base     ReLu   LReL    Dropout
+%  300x300              91.28           92.63   
+
+disp(datestr(now));
 
 %% =========== Part 1: Loading and Visualizing Data =============
 %  We start the exercise by first loading and visualizing the dataset. 
@@ -31,7 +36,18 @@ num_labels = 10;          % 10 labels, from 1 to 10
 % Load Training Data
 fprintf('Loading and Visualizing Data ...\n')
 
-load('ex4data1.mat');
+%% Loading the data
+addpath('../mnist');
+X = loadMNISTImages('train-images-idx3-ubyte')';
+y = loadMNISTLabels('train-labels-idx1-ubyte');
+X_test = loadMNISTImages('t10k-images-idx3-ubyte')';
+y_test = loadMNISTLabels('t10k-labels-idx1-ubyte');
+y(y==0) = 10;
+y_test(y_test==0) = 10;
+
+% Load Small Data (5000x400)
+% load('ex4data1.mat');
+
 m = size(X, 1);
 
 % Randomly select 100 data points to display
@@ -52,29 +68,33 @@ end
 %  implementing a function to initialize the weights of the neural network
 %  (randInitializeWeights.m)
 
-fprintf('\nInitializing Neural Network Parameters ...\n')
+if initial
+    fprintf('\nInitializing Neural Network Parameters ...\n')
 
-num_hidden_layers = size(hidden_layer_size, 2);
-initial_Theta = cell(num_hidden_layers, 1);
-initial_nn_params = [];
+    num_hidden_layers = size(hidden_layer_size, 2);
+    initial_Theta = cell(num_hidden_layers, 1);
+    initial_nn_params = [];
 
-for i = 1 : num_hidden_layers
-  if 1 == i
-    input_size = input_layer_size;
-  else
-    input_size = hidden_layer_size(1, i);
-  end
-  if num_hidden_layers == i
-    output_size = num_labels;
-  else
-    output_size = hidden_layer_size(1, i + 1);
-  end
-  initial_Theta{i} = randInitializeWeights(input_size, output_size);
+    for i = 1 : num_hidden_layers
+      if 1 == i
+        input_size = input_layer_size;
+      else
+        input_size = hidden_layer_size(1, i);
+      end
+      if num_hidden_layers == i
+        output_size = num_labels;
+      else
+        output_size = hidden_layer_size(1, i + 1);
+      end
+      initial_Theta{i} = randInitializeWeights(input_size, output_size);
 
-  % Unroll parameters
-  initial_nn_params = [initial_nn_params; initial_Theta{i}(:)];
+      % Unroll parameters
+      initial_nn_params = [initial_nn_params; initial_Theta{i}(:)];
+    end
+else
+    load('/Users/Calvin/Github/ARW/nn/history/iter100/300x300lrel_nn_params.mat');
+    initial_nn_params = nn_params;
 end
-
 
 if verbose
 %% =============== Part 7: Implement Backpropagation ===============
@@ -104,7 +124,7 @@ fprintf('\nTraining Neural Network... \n')
 
 %  After you have completed the assignment, change the MaxIter to a larger
 %  value to see how more training helps.
-batch_size = 5;
+batch_size = 1;
 options = optimset('MaxIter', batch_size, 'Display', 'off');
 
 %  You should also try different values of lambda
@@ -117,8 +137,8 @@ costFunction = @(p) nnCostFunction(p, ...
                                    num_labels, X, y, lambda);
 
 nn_params = initial_nn_params;
-iter = 20;
 accuracy = zeros(iter, 1);
+tic();
 
 for i = 1 : iter                           
     % Now, costFunction is a function that takes in only one argument (the
@@ -128,10 +148,16 @@ for i = 1 : iter
     % Obtain Theta back from nn_params
     Theta = vec2theta(nn_params, input_layer_size, hidden_layer_size, num_labels);
 
-    pred = predict(Theta, X);
-    accuracy(i) = mean(double(pred == y)) * 100;
-    fprintf('Iteration %4i | Accuracy: %4.6f\r', i*batch_size, accuracy(i));
+    pred = predict(Theta, X_test);
+    accuracy(i) = mean(double(pred == y_test)) * 100;
+    elapse = toc();
+    fprintf('Iteration %4i | Accuracy: %4.2f | Time: %8.1f\r', ...
+        i*batch_size, accuracy(i), elapse);
 end
+
+% Save the results
+save('history/300x300drop_accuracy.mat','accuracy');
+save('history/300x300drop_nn_params.mat','nn_params');
 
 fprintf('Program paused. Press enter to continue.\n');
 pause;
@@ -145,17 +171,4 @@ pause;
 fprintf('\nVisualizing Neural Network... \n')
 
 displayData(Theta{1}(:, 2:end));
-
-fprintf('\nProgram paused. Press enter to continue.\n');
-pause;
-
-%% ================= Part 10: Implement Predict =================
-%  After training the neural network, we would like to use it to predict
-%  the labels. You will now implement the "predict" function to use the
-%  neural network to predict the labels of the training set. This lets
-%  you compute the training set accuracy.
-
-pred = predict(Theta, X);
-fprintf('\nTraining Set Accuracy: %f\n', mean(double(pred == y)) * 100);
-
 

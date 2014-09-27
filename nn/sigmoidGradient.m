@@ -10,9 +10,11 @@ function g = sigmoidGradient(z)
 %               each value of z (z can be a matrix, vector or scalar).
 % ¥ò' = ¥ò(1-¥ò)
 
-% g = sigmoid(z) .* ( ones(size(z)) - sigmoid(z) );
-
-g = zeros(size(z));
-g(z>0) = 1;
-
+method = 2;
+if 1 == method
+    g = sigmoid(z) .* ( ones(size(z)) - sigmoid(z) );
+elseif 2 == method
+    g = ones(size(z));
+    g(z<0) = 0.01;
+end
 end
