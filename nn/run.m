@@ -24,7 +24,7 @@ num_labels = 10;          % 10 labels, from 1 to 10
 
 %% =========== Learning History (iter=300) ==============
 %  Test Error           Base     ReLu   LReL    Dropout
-%  300x300              91.28           92.63   
+%  300x300              91.28           92.63   69.7
 
 disp(datestr(now));
 
