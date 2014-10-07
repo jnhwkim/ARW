@@ -9,8 +9,8 @@ clear ; close all; clc
 
 %% Verbose
 verbose = false;
-initial = true;
-iter = 300;
+initial = false;
+iter = 200;
 
 %% Setup the parameters you will use for this exercise
 input_layer_size  = 784;  % 20x20 Input Images of Digits
@@ -25,6 +25,10 @@ num_labels = 10;          % 10 labels, from 1 to 10
 %% =========== Learning History (iter=300) ==============
 %  Test Error           Base     ReLu   LReL    Dropout
 %  300x300              91.28           92.63   69.7
+
+%% =========== Learning History (iter=500) ==============
+%  Test Error           Base     ReLu   LReL    Dropout
+%  300x300              92.4            94.34
 
 disp(datestr(now));
 
@@ -92,7 +96,7 @@ if initial
       initial_nn_params = [initial_nn_params; initial_Theta{i}(:)];
     end
 else
-    load('/Users/Calvin/Github/ARW/nn/history/iter100/300x300lrel_nn_params.mat');
+    load('history/iter300/300x300lrel_nn_params.mat');
     initial_nn_params = nn_params;
 end
 
@@ -156,8 +160,8 @@ for i = 1 : iter
 end
 
 % Save the results
-save('history/300x300drop_accuracy.mat','accuracy');
-save('history/300x300drop_nn_params.mat','nn_params');
+save('history/300x300lrel_accuracy.mat','accuracy');
+save('history/300x300lrel_nn_params.mat','nn_params');
 
 fprintf('Program paused. Press enter to continue.\n');
 pause;
